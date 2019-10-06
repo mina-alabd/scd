@@ -1,35 +1,46 @@
-#!/usr/bin/env bash -x
+#!/usr/bin/env bash
 
 MUSIC_DIR="$HOME/Music"
 
 __info() {
     local -r message="$1"
+
     echo "$message"
 }
 
+__get() {
+    local -r url="$1"
+    local -r jq_query="${2:-'.'}"
+
+    echo "$(curl -s "$url" | jq -r "$jq_query")"
+}
+
 __get_api_url() {
-    local -r sc_url="$1" # Like https://soundcloud.com/mayanwarriorofficial/sainte-vie-bm-2019
-    echo "$(curl -s "https://api.soundcloud.com/resolve?url=$sc_url&client_id=$SC_CLIENT_ID" | jq -r '.location')"
+    local -r sc_url="$1"
+
+    echo "$(__get "https://api.soundcloud.com/resolve?url=$sc_url&client_id=$SC_CLIENT_ID" '.location')"
 }
 
 __from_api() {
     local -r sc_url="$1"
-    local -r api_url="$(__get_api_url "$sc_url")"
+    local -r jq_query="${2:-'.'}"
 
-    echo "$(curl -s "$api_url")"
+    local -r api_url="$(__get_api_url "$sc_url")"
+    echo "$(__get "$api_url" "$jq_query")"
 }
 
 __get_cdn_url() {
-    local stream_url="$1" # Like https://api.soundcloud.com/tracks/683167353/stream
-    echo "$(curl -s "$stream_url?client_id=$SC_CLIENT_ID" | jq -r '.location')"
+    local stream_url="$1"
+
+    echo "$(__get "$stream_url?client_id=$SC_CLIENT_ID" '.location')"
 }
 
 _get_track() {
-    local -r sc_url="$1" # Like https://soundcloud.com/mayanwarriorofficial/sainte-vie-bm-2019
-    echo "$(__from_api "$sc_url" | jq -r '{title:.title,stream_url:.stream_url}')"
+    local -r sc_url="$1"
+
+    echo "$(__from_api "$sc_url" '{title:.title,stream_url:.stream_url}')"
 }
 
-# download_track SC_URL [DEST_DIR]
 download_track() {
     local -r sc_url="$1"
     local -r dest_dir="${2:-"$MUSIC_DIR"}"
@@ -40,7 +51,7 @@ download_track() {
 
 _get_user_id() {
     local -r sc_url="$1"
-    echo "$(__from_api "$sc_url" | jq -r '.id')" # TODO: Explain why
+    echo "$(__from_api "$sc_url" '.id')" # TODO: Explain why
 }
 
 __get_favorites_url() {
@@ -55,7 +66,7 @@ _get_favorite_tracks() {
     local -r sc_url="$1" # Like https://soundcloud.com/mayanwarriorofficial
     local -r url="$(__get_favorites_url "$sc_url")"
 
-    echo "$(curl -s "$url" | jq -r "$QUERY")"
+    echo "$(__get "$url" "$QUERY")"
 }
 
 _download_track() {
