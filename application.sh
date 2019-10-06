@@ -21,9 +21,9 @@ download_track() {
     local -r dest_dir="${2:-"$MUSIC_DIR"}"
     local -r api_url="$(_to_api_url "$sc_url")" # client_id is already there
     local -r track_info="$(curl -s "$api_url")"
-    local -r stream_url="$(echo "$track_info" | jq -r '.stream_url')?client_id=$SC_CLIENT_ID"
+    local -r stream_url="$(jq -r '.stream_url' <<< "$track_info")?client_id=$SC_CLIENT_ID"
     local -r cdn_url="$(curl -s "$stream_url" | jq -r ".location")"
-    local -r file_name="$(echo "$track_info" | jq -r '.title').mp3"
+    local -r file_name="$(jq -r '.title' <<< "$track_info").mp3"
     local -r file_path="$dest_dir/$file_name"
 
     curl -# "$cdn_url" -o "$file_path"
@@ -37,7 +37,7 @@ download_favorites() {
     local -r user_id="$(curl "$api_url" | jq -r '.id')" # TODO: Explain why
     local -r favorites_url="https://api.soundcloud.com/users/$user_id/favorites?client_id=$SC_CLIENT_ID"
     local -r favourites="$(curl "$favorites_url")"
-    local -r favs="$(echo "$favourites" | jq -r '.[] | select(.kind == "track") | {title:.title,url:.stream_url} | tostring')"
+    local -r favs="$(jq -r '.[] | select(.kind == "track") | {title:.title,url:.stream_url} | tostring' <<< "$favourites")"
 
     declare -a tracks
     readarray -t tracks <<< "$favs"
