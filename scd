@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-MUSIC_DIR="$HOME/Music"
+DOWNLOADS_DIR="$HOME/Downloads"
 
 __info() {
     local -r message="$1"
@@ -43,7 +43,7 @@ _get_track() {
 
 download_track() {
     local -r sc_url="$1"
-    local -r dest_dir="${2:-"$MUSIC_DIR"}"
+    local -r dest_dir="${2:-"$DOWNLOADS_DIR"}"
 
     local -r track="$(_get_track "$sc_url")"
     _download_track "$track" "$dest_dir"
@@ -71,7 +71,7 @@ _get_favorite_tracks() {
 
 _download_track() {
     local -r track="$1" # A JSON object like {"title":"...", "stream_url":"..."}
-    local -r dest_dir="${2:-"$MUSIC_DIR"}"
+    local -r dest_dir="${2:-"$DOWNLOADS_DIR"}"
     
     local -r title="$(jq -r '.title' <<< "$track")"
     local -r stream_url="$(jq -r '.stream_url' <<< "$track")"
