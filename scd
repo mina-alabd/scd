@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -xueo pipefail
+
 DOWNLOADS_DIR="$HOME/Downloads"
 
 __info() {
