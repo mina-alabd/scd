@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -xueo pipefail
+set -ueo pipefail
 
 DOWNLOADS_DIR="$HOME/Downloads"
 
@@ -14,13 +14,13 @@ __get() {
     local -r url="$1"
     local -r jq_query="${2:-'.'}"
 
-    echo "$(curl -s "$url" | jq -r "$jq_query")"
+    curl -s "$url" | jq -r "$jq_query"
 }
 
 __get_api_url() {
     local -r sc_url="$1"
 
-    echo "$(__get "https://api.soundcloud.com/resolve?url=$sc_url&client_id=$SC_CLIENT_ID" '.location')"
+    __get "https://api.soundcloud.com/resolve?url=$sc_url&client_id=$SC_CLIENT_ID" '.location'
 }
 
 __from_api() {
@@ -28,19 +28,19 @@ __from_api() {
     local -r jq_query="${2:-'.'}"
 
     local -r api_url="$(__get_api_url "$sc_url")"
-    echo "$(__get "$api_url" "$jq_query")"
+    __get "$api_url" "$jq_query"
 }
 
 __get_cdn_url() {
     local stream_url="$1"
 
-    echo "$(__get "$stream_url?client_id=$SC_CLIENT_ID" '.location')"
+    __get "$stream_url?client_id=$SC_CLIENT_ID" '.location'
 }
 
 _get_track() {
     local -r sc_url="$1"
 
-    echo "$(__from_api "$sc_url" '{title:.title,stream_url:.stream_url}')"
+    __from_api "$sc_url" '{title:.title,stream_url:.stream_url}'
 }
 
 download_track() {
@@ -53,7 +53,7 @@ download_track() {
 
 _get_user_id() {
     local -r sc_url="$1"
-    echo "$(__from_api "$sc_url" '.id')" # TODO: Explain why
+    __from_api "$sc_url" '.id' # TODO: Explain why
 }
 
 __get_favorites_url() {
@@ -68,7 +68,7 @@ _get_favorite_tracks() {
     local -r sc_url="$1" # Like https://soundcloud.com/mayanwarriorofficial
     local -r url="$(__get_favorites_url "$sc_url")"
 
-    echo "$(__get "$url" "$QUERY")"
+    __get "$url" "$QUERY"
 }
 
 _download_track() {
