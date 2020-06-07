@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet"
+          href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+          integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk"
+          crossorigin="anonymous">
+    <title>SoundCloud Downloader</title>
+</head>
+<body class="container" style="background: #f50">
+<div class="row vh-100 justify-content-center align-items-center">
+    <form id="my-form" class="col-10">
+        <div class="form-group">
+            <input required
+                   class="form-control form-control-lg"
+                   id="client-id-input"
+                   name="client-id"
+                   placeholder="SoundCloud client ID"
+                   minlength="32"
+                   maxlength="32"
+                   pattern="[a-f0-9]{32}"
+                   aria-describedby="client-id-help">
+            <small id="client-id-help" class="form-text text-white">
+                If you <a class="text-dark"
+                          href="https://soundcloud.com/you/apps"
+                          target="_blank"
+                          rel="noreferrer noopener">do not have one</a>, you can
+                <a class="text-dark"
+                   href="https://github.com/search?q=soundcloud+client+id&type=Code"
+                   target="_blank"
+                   rel="noreferrer noopener">find one on GitHub</a> ;)
+            </small>
+        </div>
+        <div class="form-group">
+            <input required
+                   class="form-control form-control-lg"
+                   id="track-url-input"
+                   name="track-url"
+                   type="url"
+                   pattern="^https://soundcloud.com/.+$"
+                   placeholder="Track URL">
+            <small id="track-url-help" class="form-text text-white">
+                Like <a class="text-dark"
+                        href="https://soundcloud.com/mayanwarriorofficial/sainte-vie-bm-2019"
+                        target="_blank"
+                        rel="noreferrer noopener">https://soundcloud.com/mayanwarriorofficial/sainte-vie-bm-2019</a>
+            </small>
+        </div>
+        <button disabled
+                id="download-button"
+                class="btn btn-dark btn-lg btn-block">
+            Download
+        </button>
+    </form>
+</div>
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+        integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+        integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+        crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+        integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+        crossorigin="anonymous"></script>
+</body>
+<script>
+    function createApiObjectUrl(permalinkUrl, clientId) {
+        return `https://api.soundcloud.com/resolve?url=${permalinkUrl}&client_id=${clientId}`
+    }
+
+    async function getApiObject(permalinkUrl, clientId) {
+        const url = createApiObjectUrl(permalinkUrl, clientId)
+        const response = await fetch(url)
+        return response.json()
+    }
+
+    async function getDownloadUrl(streamUrl, clientId) {
+        return fetch(`${streamUrl}?client_id=${clientId}`)
+            .then(response => response.blob())
+            .then(URL.createObjectURL)
+    }
+
+    async function download(permalinkUrl, clientId) {
+        const apiObject = await getApiObject(permalinkUrl, clientId)
+
+        const element = document.createElement("a")
+        element.href = await getDownloadUrl(apiObject.stream_url, clientId)
+        element.download = `${apiObject.title}.mp3`
+        element.click()
+        element.remove()
+    }
+
+    const clientIdInput = document.getElementById("client-id-input")
+    let clientId = clientIdInput.value
+    clientIdInput.addEventListener("input", function () {
+        clientId = clientIdInput.reportValidity() ? clientIdInput.value : null
+        console.log(`New client ID: ${clientId}`)
+    })
+
+    const trackUrlInput = document.getElementById("track-url-input")
+    let trackUrl = trackUrlInput.value
+    trackUrlInput.addEventListener("input", function () {
+        trackUrl = trackUrlInput.reportValidity() ? trackUrlInput.value : null
+        console.log(`New track URL: ${trackUrl}`)
+    })
+
+    const downloadButton = document.getElementById("download-button")
+
+    function handleDownloadButtonState() {
+        downloadButton.disabled = !(clientId && trackUrl)
+    }
+
+    clientIdInput.addEventListener("input", handleDownloadButtonState)
+    trackUrlInput.addEventListener("input", handleDownloadButtonState)
+
+    const formElement = document.getElementById("my-form")
+    formElement.addEventListener("load", handleDownloadButtonState)
+    formElement.addEventListener("submit", function (event) {
+        Promise.all([download(trackUrl, clientId)])
+        event.preventDefault()
+    })
+</script>
+</html>
